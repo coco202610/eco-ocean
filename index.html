@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蔚蓝之下 · 海洋塑料污染 | Beneath the Blue · Marine Plastic Pollution</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#eaf6ff;--muted:#9fc3d8;--accent:#38e1c6;--warn:#ffb454;--card:rgba(255,255,255,.06)}
+html{scroll-behavior:smooth}
+body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;color:var(--ink);background:#7EC8E3;transition:background .25s linear;overflow-x:hidden;line-height:1.75}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+/* ---------- fixed depth meter ---------- */
+#meter{position:fixed;left:18px;top:50%;transform:translateY(-50%);z-index:50;width:74px;text-align:center;pointer-events:none}
+#meter .rail{width:6px;height:46vh;margin:10px auto;border-radius:6px;background:linear-gradient(#7EC8E3,#0b3a5e 35%,#041c33 70%,#000);border:1px solid rgba(255,255,255,.25);position:relative}
+#meter .sub{position:absolute;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#38e1c6;box-shadow:0 0 14px #38e1c6;border:2px solid #fff}
+#meter .num{font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+#meter .lab{font-size:11px;color:var(--muted)}
+#hint{position:fixed;right:18px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;font-size:12px;letter-spacing:6px;color:rgba(255,255,255,.55);z-index:50}
+/* ---------- hero ---------- */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(52px,9vw,110px);font-weight:900;letter-spacing:.18em;text-shadow:0 6px 40px rgba(0,40,80,.45);margin-bottom:14px}
+.hero p.sub{font-size:clamp(16px,2.4vw,22px);color:#f2fbff;opacity:.92;max-width:640px}
+.hero .scrolldown{position:absolute;bottom:34px;font-size:13px;letter-spacing:4px;color:#fff;opacity:.85;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(12px)}}
+.wave{position:absolute;bottom:-2px;left:0;width:200%;height:120px;opacity:.35;animation:wave 9s linear infinite}
+.wave.w2{opacity:.2;animation-duration:14s;animation-direction:reverse}
+@keyframes wave{to{transform:translateX(-50%)}}
+section{padding:90px 0;position:relative}
+.sec-tag{display:inline-block;font-size:12px;letter-spacing:5px;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:4px 16px;margin-bottom:18px}
+h2{font-size:clamp(28px,4vw,42px);margin-bottom:14px;font-weight:800}
+.lead{color:var(--muted);font-size:17px;max-width:680px;margin-bottom:34px}
+.card{background:var(--card);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:28px;margin:22px 0;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.depth-lab{font-size:13px;color:var(--warn);letter-spacing:3px;margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}#meter{left:6px;width:56px}#hint{display:none}}
+.donut-wrap{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.legend{font-size:14px}
+.legend div{margin:8px 0;display:flex;align-items:center;gap:10px}
+.sw{width:16px;height:16px;border-radius:4px;display:inline-block}
+canvas.chart{width:100%;height:300px;background:rgba(0,0,0,.25);border-radius:14px}
+.bars .row{display:flex;align-items:center;gap:12px;margin:12px 0}
+.bars .name{width:130px;font-size:14px;text-align:right;flex-shrink:0}
+.bars .track{flex:1;height:22px;background:rgba(255,255,255,.12);border-radius:11px;overflow:hidden}
+.bars .fill{height:100%;border-radius:11px;background:linear-gradient(90deg,#38e1c6,#2aa8ff);width:0;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.bars .val{width:96px;font-size:13px;color:var(--muted);flex-shrink:0}
+.layer{border-left:3px solid var(--accent);padding:6px 0 6px 22px;margin:30px 0;position:relative}
+.layer::before{content:attr(data-d);position:absolute;left:-86px;top:4px;font-size:12px;color:var(--warn);width:70px;text-align:right}
+.layer h3{font-size:21px;margin-bottom:8px}
+.layer p{color:var(--muted);font-size:15px}
+/* quiz */
+.quiz-q{font-size:19px;font-weight:700;margin-bottom:16px}
+.quiz-opts button{display:block;width:100%;text-align:left;margin:10px 0;padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:var(--ink);font-size:15px;cursor:pointer;transition:.2s}
+.quiz-opts button:hover{background:rgba(56,225,198,.15);border-color:var(--accent)}
+.quiz-opts button.ok{background:rgba(56,225,198,.28);border-color:var(--accent)}
+.quiz-opts button.no{background:rgba(255,90,90,.22);border-color:#ff5a5a}
+#quiz-bar{height:8px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden;margin:18px 0}
+#quiz-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+#quiz-fb{min-height:30px;font-size:15px;margin-top:12px;color:var(--accent)}
+/* pledges */
+.pledge{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:12px;cursor:pointer;transition:.2s;border:1px solid transparent}
+.pledge:hover{background:rgba(255,255,255,.05)}
+.pledge .box{width:26px;height:26px;border:2px solid var(--accent);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--accent);margin-top:2px}
+.pledge.done .box{background:var(--accent);color:#022}
+.pledge.done .txt{color:var(--muted);text-decoration:line-through}
+.pledge .txt{font-size:15px}
+#pledge-count{font-size:14px;color:var(--accent);margin-top:10px}
+footer{padding:70px 0 50px;text-align:center;color:var(--muted);font-size:13px}
+.src{font-size:12px;color:rgba(255,255,255,.45);margin-top:26px}
+.src li{margin:4px 0;list-style:none}
+a{color:var(--accent)}
+/* bilingual */
+.en{display:block;font-size:0.72em;opacity:0.72;font-weight:400;letter-spacing:0.02em;margin-top:4px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div id="meter">
+  <div class="num" id="depth-num">0m</div>
+  <div class="rail"><div class="sub" id="sub-dot" style="top:0%"></div></div>
+  <div class="lab">深度计<span class="en">Depth</span></div>
+</div>
+<div id="hint">向 下 潜 入 ↓<span class="en">DIVE ↓</span></div>
+
+<header class="hero" id="hero">
+  <h1>蔚蓝之下<span class="en">Beneath the Blue</span></h1>
+  <p class="sub">每一次下潜，都是一次直面真相的旅程。<span class="en">Every dive is a journey to face the truth.</span><br>跟随我们，从海面潜入 3980 米的深渊，看看塑料在海洋里的真实命运。<span class="en">Follow us from the surface down 3,980 meters into the abyss to witness the real fate of plastic in the ocean.</span></p>
+  <div class="scrolldown">▼ 向下滚动 · 开始下潜<span class="en">Scroll down · Start diving</span></div>
+  <svg class="wave" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,60 C200,110 400,10 600,60 C800,110 1000,10 1200,60 L1200,120 L0,120 Z" fill="#fff"/></svg>
+  <svg class="wave w2" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,70 C250,20 450,110 700,60 C900,20 1050,100 1200,70 L1200,120 L0,120 Z" fill="#fff"/></svg>
+</header>
+
+<div class="wrap">
+
+<section id="s-fate">
+  <div class="depth-lab">深度 · 0 米 —— 海面<span class="en">Depth · 0 m — Sea Surface</span></div>
+  <span class="sec-tag">第一章 · 塑料都去哪了<span class="en">Ch.1 · Where Did All the Plastic Go</span></span>
+  <h2>83 亿吨塑料的人间之旅<span class="en">The Journey of 8.3 Billion Tons of Plastic</span></h2>
+  <p class="lead">自 1950 年以来，人类累计生产了约 83 亿吨塑料。其中只有 9% 被回收，12% 被焚烧，其余 79% 被填埋或直接流入自然环境——包括海洋。<span class="en">Since 1950, humanity has produced about 8.3 billion tons of plastic. Only 9% has been recycled, 12% incinerated, and the remaining 79% landfilled or leaked directly into the natural environment — including the ocean.</span></p>
+  <div class="card">
+    <div class="donut-wrap">
+      <svg width="240" height="240" viewBox="0 0 240 240" id="donut">
+        <circle cx="120" cy="120" r="95" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="34"/>
+      </svg>
+      <div class="legend">
+        <div><span class="sw" style="background:#ff5a5a"></span>填埋 / 遗弃自然环境 · 79%<span class="en">Landfilled / leaked into nature · 79%</span></div>
+        <div><span class="sw" style="background:#ffb454"></span>焚烧 · 12%<span class="en">Incinerated · 12%</span></div>
+        <div><span class="sw" style="background:#38e1c6"></span>回收利用 · 9%<span class="en">Recycled · 9%</span></div>
+      </div>
+    </div>
+    <ul class="src"><li>数据来源：Geyer et al., Science Advances, 2017<span class="en">Source: Geyer et al., Science Advances, 2017</span></li></ul>
+  </div>
+</section>
+
+<section id="s-prod">
+  <div class="depth-lab">深度 · -200 米 —— 暮光带<span class="en">Depth · -200 m — Twilight Zone</span></div>
+  <span class="sec-tag">第二章 · 失控的产量曲线<span class="en">Ch.2 · The Runaway Production Curve</span></span>
+  <h2>塑料产量：从 200 万吨到 4 亿吨<span class="en">Plastic Production: From 2 Million to 400 Million Tons</span></h2>
+  <p class="lead">1950 年全球塑料年产量仅 200 万吨，2015 年已超过 4 亿吨。虚线是按当前趋势外推至 2050 年的预测——那时海洋中的塑料重量可能超过鱼类总重。<span class="en">In 1950, global annual plastic production was just 2 million tons; by 2015 it exceeded 400 million tons. The dashed line projects the current trend to 2050 — when plastic in the ocean could outweigh all fish combined.</span></p>
+  <div class="card">
+    <canvas class="chart" id="prod-chart" width="900" height="300"></canvas>
+    <ul class="src"><li>数据来源：Geyer et al., 2017；WWF 2050 趋势外推<span class="en">Sources: Geyer et al., 2017; WWF 2050 trend projection</span></li></ul>
+  </div>
+</section>
+
+<section id="s-decay">
+  <div class="depth-lab">深度 · -500 米 —— 午夜带上缘<span class="en">Depth · -500 m — Upper Midnight Zone</span></div>
+  <span class="sec-tag">第三章 · 它们多久才会消失<span class="en">Ch.3 · How Long Until They Disappear</span></span>
+  <h2>一件垃圾的"寿命"<span class="en">The "Lifespan" of a Piece of Litter</span></h2>
+  <p class="lead">在海洋里，"可降解"是一个漫长的谎言。滚动到此处，看看常见垃圾完全分解需要的时间——条形越长，停留越久。<span class="en">In the ocean, "biodegradable" is a long lie. Scroll here to see how long common litter takes to fully decompose — the longer the bar, the longer it lingers.</span></p>
+  <div class="card bars" id="decay-bars">
+    <div class="row"><div class="name">纸巾<span class="en">Tissue</span></div><div class="track"><div class="fill" data-w="2"></div></div><div class="val">2–4 周<span class="en">2–4 weeks</span></div></div>
+    <div class="row"><div class="name">香蕉皮<span class="en">Banana peel</span></div><div class="track"><div class="fill" data-w="5"></div></div><div class="val">2–5 周<span class="en">2–5 weeks</span></div></div>
+    <div class="row"><div class="name">纸板箱<span class="en">Cardboard box</span></div><div class="track"><div class="fill" data-w="10"></div></div><div class="val">2 个月<span class="en">2 months</span></div></div>
+    <div class="row"><div class="name">棉质衣物<span class="en">Cotton clothing</span></div><div class="track"><div class="fill" data-w="16"></div></div><div class="val">1–5 个月<span class="en">1–5 months</span></div></div>
+    <div class="row"><div class="name">木板<span class="en">Wooden plank</span></div><div class="track"><div class="fill" data-w="30"></div></div><div class="val">10–15 年<span class="en">10–15 years</span></div></div>
+    <div class="row"><div class="name">易拉罐<span class="en">Aluminum can</span></div><div class="track"><div class="fill" data-w="55"></div></div><div class="val">约 200 年<span class="en">~200 years</span></div></div>
+    <div class="row"><div class="name">塑料袋<span class="en">Plastic bag</span></div><div class="track"><div class="fill" data-w="70"></div></div><div class="val">约 470 年<span class="en">~470 years</span></div></div>
+    <div class="row"><div class="name">塑料瓶<span class="en">Plastic bottle</span></div><div class="track"><div class="fill" data-w="85"></div></div><div class="val">约 450 年<span class="en">~450 years</span></div></div>
+    <div class="row"><div class="name">渔网<span class="en">Fishing net</span></div><div class="track"><div class="fill" data-w="95"></div></div><div class="val">约 600 年<span class="en">~600 years</span></div></div>
+    <div class="row"><div class="name">玻璃瓶<span class="en">Glass bottle</span></div><div class="track"><div class="fill" data-w="100"></div></div><div class="val">100 万年+<span class="en">1M+ years</span></div></div>
+    <ul class="src"><li>数据来源：NOAA 海洋垃圾降解时间估算（综合多项研究）<span class="en">Source: NOAA marine debris decomposition estimates (multiple studies)</span></li></ul>
+  </div>
+</section>
+
+<section id="s-harm">
+  <div class="depth-lab">深度 · -1000 米 —— 深渊带<span class="en">Depth · -1,000 m — Abyssal Zone</span></div>
+  <span class="sec-tag">第四章 · 四层危害日志<span class="en">Ch.4 · Four Layers of Harm</span></span>
+  <h2>塑料杀死海洋的四种方式<span class="en">Four Ways Plastic Kills the Ocean</span></h2>
+  <p class="lead">越往深处，伤害越隐蔽。从看得见的缠绕，到看不见的微塑料入侵食物链。<span class="en">The deeper you go, the more hidden the harm — from visible entanglement to invisible microplastics invading the food chain.</span></p>
+  <div class="layer" data-d="-2m">
+    <h3>🪢 缠绕 —— 看得见的死亡<span class="en">Entanglement — Visible Death</span></h3>
+    <p>每年约 10 万只海洋哺乳动物和 100 万只海鸟死于塑料缠绕。废弃渔网被称为"幽灵渔具"，在海里可持续捕捞数十年，无差别地杀死海龟、海豹、海豚。<span class="en">About 100,000 marine mammals and 1 million seabirds die each year from plastic entanglement. Abandoned fishing nets, known as "ghost gear," keep fishing indiscriminately for decades, killing turtles, seals, and dolphins.</span></p>
+  </div>
+  <div class="layer" data-d="-10m">
+    <h3>🐢 误食 —— 把塑料当水母<span class="en">Ingestion — Mistaking Plastic for Jellyfish</span></h3>
+    <p>海龟把漂浮的塑料袋误认为水母，海鸟把瓶盖当成鱼卵。据估计，99% 的海鸟体内都含有塑料。一只信天翁雏鸟的胃里，曾发现 200 多块塑料碎片。<span class="en">Sea turtles mistake floating plastic bags for jellyfish; seabirds mistake bottle caps for fish eggs. An estimated 99% of seabirds have plastic in their bodies — over 200 fragments were once found in a single albatross chick's stomach.</span></p>
+  </div>
+  <div class="layer" data-d="-200m">
+    <h3>🔬 微塑料 —— 看不见的入侵<span class="en">Microplastics — The Invisible Invasion</span></h3>
+    <p>塑料在紫外线和海浪作用下碎裂成小于 5 毫米的微塑料，被浮游生物摄入，进入食物链。研究已在人类血液、胎盘和母乳中检测到微塑料。<span class="en">Plastic fragments into microplastics smaller than 5mm under UV and wave action, gets eaten by plankton, and enters the food chain. Studies have detected microplastics in human blood, placenta, and breast milk.</span></p>
+  </div>
+  <div class="layer" data-d="-1000m">
+    <h3>🕳️ 深渊 —— 最后的垃圾场<span class="en">The Abyss — The Final Landfill</span></h3>
+    <p>科学家在 3980 米深的海沟沉积物中发现了微塑料纤维，在马里亚纳海沟 10900 米处也检测到塑料污染。深海成了人类垃圾的终极归宿——那里没有光，没有分解，只有堆积。<span class="en">Scientists found microplastic fibers in trench sediments 3,980 meters deep, and plastic pollution even at 10,900 meters in the Mariana Trench. The deep sea has become humanity's ultimate landfill — no light, no decomposition, only accumulation.</span></p>
+  </div>
+</section>
+
+<section id="s-quiz">
+  <div class="depth-lab">深度 · -3000 米 —— 超深渊带<span class="en">Depth · -3,000 m — Hadal Zone</span></div>
+  <span class="sec-tag">第五章 · 深渊测验<span class="en">Ch.5 · Abyss Quiz</span></span>
+  <h2>你对海洋塑料了解多少？<span class="en">How Much Do You Know About Ocean Plastic?</span></h2>
+  <p class="lead">七道题，测测你是不是真正的海洋守护者。<span class="en">Seven questions — find out if you're a true ocean guardian.</span></p>
+  <div class="card">
+    <div id="quiz-bar"><i></i></div>
+    <div class="quiz-q" id="quiz-q"></div>
+    <div class="quiz-opts" id="quiz-opts"></div>
+    <div id="quiz-fb"></div>
+  </div>
+</section>
+
+<section id="s-act">
+  <div class="depth-lab">深度 · -3980 米 —— 海沟底部<span class="en">Depth · -3,980 m — Trench Floor</span></div>
+  <span class="sec-tag">终章 · 上浮：行动承诺<span class="en">Finale · Ascent: Pledges for Action</span></span>
+  <h2>从深渊带回八个承诺<span class="en">Bring Back Eight Pledges from the Abyss</span></h2>
+  <p class="lead">了解真相不是为了绝望，而是为了行动。勾选你愿意做到的事——你的选择会被保存在这台设备上。<span class="en">Knowing the truth is not for despair, but for action. Check what you're willing to do — your choices are saved on this device.</span></p>
+  <div class="card" id="pledges"></div>
+  <div id="pledge-count"></div>
+</section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>🌊 蔚蓝之下 —— 愿每一次下潜，都换来一次上浮的希望。<span class="en">Beneath the Blue — may every dive bring back hope for the ascent.</span></p>
+    <ul class="src">
+      <li>数据来源：UNEP《一次性塑料报告》· Geyer et al., Science Advances 2017 · Lebreton et al., Scientific Reports 2018 · NOAA · WWF<span class="en">Sources: UNEP Single-Use Plastics Report · Geyer et al., Science Advances 2017 · Lebreton et al., Scientific Reports 2018 · NOAA · WWF</span></li>
+      <li>本页面为环保科普公益页面，数据为公开研究估算值<span class="en">This is a non-profit environmental education page; data are estimates from public research.</span></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+/* ===== scroll depth engine ===== */
+(function(){
+  var maxDepth = 3980;
+  function onScroll(){
+    var h = document.documentElement;
+    var p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1);
+    p = Math.max(0, Math.min(1, p));
+    var d = Math.round(p * maxDepth);
+    document.getElementById('depth-num').textContent = d + 'm';
+    document.getElementById('sub-dot').style.top = (p*100) + '%';
+    // sea color: #7EC8E3 -> #020617
+    var top = [126,200,227], bot = [2,6,23];
+    var c = top.map(function(t,i){ return Math.round(t + (bot[i]-t)*Math.pow(p,1.15)); });
+    document.body.style.background = 'rgb('+c.join(',')+')';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+
+/* ===== donut chart: plastic fate ===== */
+(function(){
+  var svg = document.getElementById('donut');
+  var data = [
+    {v:79, c:'#ff5a5a'},
+    {v:12, c:'#ffb454'},
+    {v:9,  c:'#38e1c6'}
+  ];
+  var r = 95, circ = 2*Math.PI*r, off = 0;
+  data.forEach(function(s){
+    var el = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    el.setAttribute('cx',120); el.setAttribute('cy',120); el.setAttribute('r',r);
+    el.setAttribute('fill','none'); el.setAttribute('stroke',s.c);
+    el.setAttribute('stroke-width','34');
+    el.setAttribute('stroke-dasharray', (s.v/100*circ)+' '+circ);
+    el.setAttribute('stroke-dashoffset', -off/100*circ);
+    el.setAttribute('transform','rotate(-90 120 120)');
+    svg.appendChild(el);
+    off += s.v;
+  });
+  var t = document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x',120); t.setAttribute('y',112); t.setAttribute('text-anchor','middle');
+  t.setAttribute('fill','#fff'); t.setAttribute('font-size','30'); t.setAttribute('font-weight','800');
+  t.textContent = '83亿吨'; svg.appendChild(t);
+  var t2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  t2.setAttribute('x',120); t2.setAttribute('y',138); t2.setAttribute('text-anchor','middle');
+  t2.setAttribute('fill','#9fc3d8'); t2.setAttribute('font-size','13');
+  t2.textContent = '累计产量 · total produced'; svg.appendChild(t2);
+})();
+
+/* ===== production line chart ===== */
+(function(){
+  var cv = document.getElementById('prod-chart'), ctx = cv.getContext('2d');
+  var years = [1950,1960,1970,1980,1990,2000,2010,2015,2020,2030,2040,2050];
+  var vals  = [2,8,35,70,120,213,313,407,460,600,760,900]; // 百万吨，2020后为趋势外推
+  var W = cv.width, H = cv.height, pad = 46;
+  function X(i){ return pad + i*(W-2*pad)/(years.length-1); }
+  function Y(v){ return H-pad - (v/950)*(H-2*pad); }
+  ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.fillStyle='#9fc3d8'; ctx.font='12px sans-serif';
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  [0,250,500,750].forEach(function(v){
+    ctx.beginPath(); ctx.moveTo(pad,Y(v)); ctx.lineTo(W-pad,Y(v));
+    ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.stroke();
+    ctx.fillText(v+' Mt', 6, Y(v)+4);
+  });
+  years.forEach(function(y,i){ if(i%2===0) ctx.fillText(y, X(i)-14, H-pad+18); });
+  // solid part (1950-2015)
+  ctx.beginPath();
+  for(var i=0;i<=7;i++){ i?ctx.lineTo(X(i),Y(vals[i])):ctx.moveTo(X(0),Y(vals[0])); }
+  ctx.strokeStyle='#38e1c6'; ctx.lineWidth=3; ctx.stroke();
+  // dashed projection
+  ctx.beginPath(); ctx.setLineDash([7,6]);
+  ctx.moveTo(X(7),Y(vals[7]));
+  for(var j=8;j<years.length;j++){ ctx.lineTo(X(j),Y(vals[j])); }
+  ctx.strokeStyle='#ffb454'; ctx.lineWidth=2.5; ctx.stroke(); ctx.setLineDash([]);
+  // points + labels
+  [[0,'2Mt'],[7,'407Mt'],[11,'~900Mt?']].forEach(function(p){
+    ctx.beginPath(); ctx.arc(X(p[0]),Y(vals[p[0]]),5,0,7); ctx.fillStyle='#fff'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.fillText(p[1], X(p[0])-18, Y(vals[p[0]])-12);
+  });
+  ctx.fillStyle='#ffb454'; ctx.fillText('虚线：趋势外推 dashed: projection', W-220, pad-14);
+})();
+
+/* ===== decay bars animate on view ===== */
+(function(){
+  var sec = document.getElementById('decay-bars'), done=false;
+  function check(){
+    if(done) return;
+    var r = sec.getBoundingClientRect();
+    if(r.top < innerHeight*0.75){
+      done = true;
+      sec.querySelectorAll('.fill').forEach(function(f,i){
+        setTimeout(function(){ f.style.width = f.getAttribute('data-w')+'%'; }, i*90);
+      });
+    }
+  }
+  window.addEventListener('scroll', check, {passive:true}); check();
+})();
+
+/* ===== quiz ===== */
+(function(){
+  var qs = [
+    {q:'人类历史上生产的塑料，大约有多少比例被回收？', qe:'Roughly what share of all plastic ever made has been recycled?', o:['约 9%','约 25%','约 50%','约 70%'], oe:['About 9%','About 25%','About 50%','About 70%'], a:0, e:'只有约 9% 被回收，79% 被填埋或流入环境。', ee:'Only about 9% was recycled; 79% was landfilled or leaked into the environment.'},
+    {q:'一个普通塑料袋在海洋中完全分解大约需要多久？', qe:'How long does a regular plastic bag take to fully decompose in the ocean?', o:['约 10 年','约 100 年','约 470 年','约 1000 年'], oe:['About 10 years','About 100 years','About 470 years','About 1,000 years'], a:2, e:'约 470 年——它会先碎成微塑料，继续存在更久。', ee:'About 470 years — it first breaks into microplastics that linger even longer.'},
+    {q:'"微塑料"指的是尺寸小于多少的塑料颗粒？', qe:'"Microplastics" are plastic particles smaller than…?', o:['5 毫米','5 厘米','5 微米','5 纳米'], oe:['5 millimeters','5 centimeters','5 micrometers','5 nanometers'], a:0, e:'小于 5 毫米即为微塑料，已在人体血液中被检出。', ee:'Anything under 5mm counts as microplastic — already found in human blood.'},
+    {q:'废弃渔网在海洋中被称为什么？', qe:'What are abandoned fishing nets in the ocean called?', o:['海神之网','幽灵渔具','深渊之触','潮汐陷阱'], oe:['Nets of Poseidon','Ghost gear','Touch of the abyss','Tidal traps'], a:1, e:'"幽灵渔具"可持续捕捞数十年，无差别杀死海洋生物。', ee:'"Ghost gear" keeps fishing for decades, killing marine life indiscriminately.'},
+    {q:'科学家在多深的海沟沉积物中发现了微塑料？', qe:'At what depth did scientists find microplastics in trench sediments?', o:['约 1000 米','约 3980 米','约 6000 米','约 10900 米'], oe:['About 1,000 m','About 3,980 m','About 6,000 m','About 10,900 m'], a:3, e:'连 10900 米的马里亚纳海沟都未能幸免。', ee:'Not even the 10,900-meter Mariana Trench was spared.'},
+    {q:'据估计，多少比例的海鸟体内含有塑料？', qe:'An estimated what share of seabirds have plastic in their bodies?', o:['约 30%','约 60%','约 90%','约 99%'], oe:['About 30%','About 60%','About 90%','About 99%'], a:3, e:'约 99% 的海鸟体内含有塑料。', ee:'About 99% of seabirds have plastic in their bodies.'},
+    {q:'到 2050 年，按当前趋势海洋塑料与鱼类重量的关系可能是？', qe:'By 2050, at current trends, ocean plastic vs. fish by weight will be…?', o:['塑料约为鱼的 1/10','两者大致相当','塑料将超过鱼类总重','鱼类将完全消失'], oe:['Plastic ≈ 1/10 of fish','Roughly equal','Plastic will outweigh all fish','Fish will vanish entirely'], a:2, e:'WWF 预测：2050 年海洋塑料重量可能超过鱼类总重。', ee:'WWF projects ocean plastic could outweigh all fish by 2050.'}
+  ];
+  var idx=0, score=0;
+  var qEl=document.getElementById('quiz-q'), oEl=document.getElementById('quiz-opts'),
+      fb=document.getElementById('quiz-fb'), bar=document.querySelector('#quiz-bar i');
+  function render(){
+    if(idx>=qs.length){
+      var title = score>=6?'🏆 深渊守护者':score>=4?'🐬 海洋之友':score>=2?'🐠 潜水新手':'🦐 需要再潜一次';
+      var titleEn = score>=6?'🏆 Abyss Guardian':score>=4?'🐬 Friend of the Ocean':score>=2?'🐠 Dive Beginner':'🦐 Time for Another Dive';
+      qEl.innerHTML='测验完成！<span class="en">Quiz complete!</span>';
+      oEl.innerHTML='';
+      fb.innerHTML='你的得分：<b style="font-size:24px">'+score+' / '+qs.length+'</b><span class="en">Your score: '+score+' / '+qs.length+'</span><br>'+title+'<span class="en">'+titleEn+'</span><br><br><button id="rq" style="padding:10px 26px;border-radius:10px;border:1px solid #38e1c6;background:transparent;color:#38e1c6;cursor:pointer;font-size:15px">再测一次<span class="en" style="font-size:11px">Retake</span></button>';
+      document.getElementById('rq').onclick=function(){idx=0;score=0;render();};
+      return;
+    }
+    var q=qs[idx];
+    qEl.innerHTML='第 '+(idx+1)+' / '+qs.length+' 题：'+q.q+'<span class="en">Q'+(idx+1)+' / '+qs.length+': '+q.qe+'</span>';
+    fb.textContent='';
+    oEl.innerHTML='';
+    bar.style.width=(idx/qs.length*100)+'%';
+    q.o.forEach(function(opt,i){
+      var b=document.createElement('button'); b.innerHTML=opt+'<span class="en">'+q.oe[i]+'</span>';
+      b.onclick=function(){
+        var btns=oEl.querySelectorAll('button');
+        btns.forEach(function(x){x.disabled=true;});
+        if(i===q.a){ b.classList.add('ok'); score++; fb.innerHTML='✅ 正确！'+q.e+'<span class="en">✅ Correct! '+q.ee+'</span>'; }
+        else{ b.classList.add('no'); btns[q.a].classList.add('ok'); fb.innerHTML='❌ 答错了。'+q.e+'<span class="en">❌ Wrong. '+q.ee+'</span>'; }
+        bar.style.width=((idx+1)/qs.length*100)+'%';
+        setTimeout(function(){ idx++; render(); }, 1900);
+      };
+      oEl.appendChild(b);
+    });
+  }
+  render();
+})();
+
+/* ===== pledges with localStorage ===== */
+(function(){
+  var items=[
+    '出门自带购物袋、水杯和餐具，拒绝一次性塑料',
+    '买饮料选择可重复灌装的杯子，少买瓶装水',
+    '不使用含微珠的洗面奶、牙膏等个人护理品',
+    '外卖备注"无需一次性餐具"，堂食优先',
+    '旧衣物、旧渔具不随意丢弃，参与社区回收',
+    '海滩游玩时带走自己的全部垃圾，多捡一件',
+    '向家人朋友科普一次海洋塑料污染',
+    '支持无包装商店 / 散装购买，一周至少一次'
+  ];
+  var itemsEn=[
+    'Bring your own shopping bag, cup and utensils; refuse single-use plastics',
+    'Choose refillable cups for drinks; buy fewer bottled waters',
+    'Avoid personal-care products with microbeads (face wash, toothpaste, etc.)',
+    'Note "no disposable cutlery" on food deliveries; dine in when possible',
+    'Never dump old clothes or fishing gear; join community recycling',
+    'Take all your litter off the beach — and pick up one extra piece',
+    'Teach family or friends about marine plastic pollution once',
+    'Shop package-free / in bulk at least once a week'
+  ];
+  var key='ocean_pledges_v1', saved={};
+  try{ saved=JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
+  var box=document.getElementById('pledges'), cnt=document.getElementById('pledge-count');
+  function paint(){
+    var n=0;
+    box.querySelectorAll('.pledge').forEach(function(el,i){
+      var on=!!saved[i]; el.classList.toggle('done',on);
+      el.querySelector('.box').textContent=on?'✓':'';
+      if(on)n++;
+    });
+    cnt.innerHTML='已承诺 '+n+' / '+items.length+' 项'+(n===items.length?' —— 你是真正的深渊守护者 🌊':'')+'<span class="en">Pledged '+n+' / '+items.length+(n===items.length?' — you are a true Abyss Guardian 🌊':'')+'</span>';
+  }
+  items.forEach(function(t,i){
+    var d=document.createElement('div'); d.className='pledge';
+    d.innerHTML='<div class="box"></div><div class="txt">'+t+'<span class="en">'+itemsEn[i]+'</span></div>';
+    d.onclick=function(){ saved[i]=!saved[i]; try{localStorage.setItem(key,JSON.stringify(saved));}catch(e){} paint(); };
+    box.appendChild(d);
+  });
+  paint();
+})();
+</script>
+</body>
+</html>
